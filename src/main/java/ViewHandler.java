@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-
 public class ViewHandler {
     private static File      sort_directory;
     private static JTextArea errorArea;
@@ -25,6 +24,7 @@ public class ViewHandler {
     // Create an window with options
     private static JFrame createWindow() {
         JFrame frame = new JFrame("File Sorter");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         JFileChooser fc = createFileChooser();
 
         Button runBtn = new Button("Select Folder");
@@ -65,7 +65,7 @@ public class ViewHandler {
             for (String key : filesMap.keySet()) {
 
                 List<File> files = new ArrayList<>(filesMap.get(key));
-                files.sort(Comparator.comparing(File::lastModified));
+                files.sort(Comparator.comparing(File::lastModified).reversed());
 
                 boolean foundLatVer = false;
                 boolean foundLatExp = false;
@@ -91,11 +91,10 @@ public class ViewHandler {
 
             System.out.println("Files sorted");
 
-            /*
             moveFilesToFolder(latestVersions, "Project Files");
             moveFilesToFolder(olderVersions, "Project Files (Old)");
             moveFilesToFolder(latestExportVersions, "Exports");
-            moveFilesToFolder(olderExportVersions, "Exports (Old)");*/
+            moveFilesToFolder(olderExportVersions, "Exports (Old)");
 
             System.out.println("Success!");
         } catch (Exception e) {
@@ -108,7 +107,7 @@ public class ViewHandler {
         folderPath.mkdir();
 
         for (File file : files) {
-            Files.copy(file.toPath(), Paths.get(folderPath.getAbsolutePath(), file.getName()), StandardCopyOption.REPLACE_EXISTING);
+            Files.move(file.toPath(), Paths.get(folderPath.getAbsolutePath(), file.getName()), StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
@@ -141,7 +140,7 @@ public class ViewHandler {
                 .replaceAll("_.*", "")
                 .replaceAll("\\..*", "")
                 .replaceAll("v\\d", "")
-                //.replaceAll("\\d", "")
+                .replaceAll("\\d$", "")
                 .trim();
     }
 
