@@ -7,6 +7,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -107,7 +108,16 @@ public class ViewHandler {
         folderPath.mkdir();
 
         for (File file : files) {
-            Files.move(file.toPath(), Paths.get(folderPath.getAbsolutePath(), file.getName()), StandardCopyOption.REPLACE_EXISTING);
+            Path dst = Paths.get(folderPath.getAbsolutePath(), file.getName());
+            Path src = file.toPath();
+            if (dst.toFile().exists() && !src.equals(dst)) {
+                String dstStr  = dst.toString();
+                String fileExt = FilenameUtils.getExtension(dstStr);
+                String newPath = FilenameUtils.removeExtension(dstStr) + " (Copy)." + fileExt;
+                Files.move(src, new File(newPath).toPath(), StandardCopyOption.ATOMIC_MOVE);
+            } else {
+                Files.move(src, dst, StandardCopyOption.ATOMIC_MOVE);
+            }
         }
     }
 
