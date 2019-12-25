@@ -3,7 +3,6 @@ import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,37 +14,39 @@ import java.util.Comparator;
 import java.util.List;
 
 public class ViewHandler {
-    private static File      sort_directory;
-    private static JTextArea errorArea;
 
     public static void main(String[] args) {
-        createWindow();
+        JFileChooser fileChooser = createFileChooser();
+        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            try {
+                Multimap<String, File> mapOfFiles = createMapOfFiles(fileChooser.getSelectedFile());
+                List<Project>          projects   = extractMapToList(mapOfFiles);
+                createWindow(projects);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    private static List<Project> extractMapToList(Multimap<String, File> map) {
+        List<Project> projects = new ArrayList<>();
+
+        // For every array of files for a given key
+        for (String key : map.keySet()) {
+            List<File> files = new ArrayList<>(map.get(key));
+            files.sort(Comparator.comparing(File::lastModified).reversed());
+            projects.add(new Project(key));
+        }
+        return projects;
     }
 
     // Create an window with options
-    private static JFrame createWindow() {
-        JFrame frame = new JFrame("File Sorter");
+    private static JFrame createWindow(List<Project> projects) {
+        JFrame frame = new JFrame("ProjectOverview");
+        frame.setContentPane(new ProjectOverview(projects).panel);
+
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        JFileChooser fc = createFileChooser();
 
-        Button runBtn = new Button("Select Folder");
-        runBtn.setPreferredSize(new Dimension(100, 40));
-        runBtn.addActionListener(e -> {
-            if (fc.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
-                sort_directory = fc.getSelectedFile();
-            }
-        });
-
-        Button startBtn = new Button("Sort Files");
-        startBtn.setPreferredSize(new Dimension(100, 40));
-        startBtn.addActionListener(e -> run());
-
-        errorArea = new JTextArea("Error text");
-        errorArea.setPreferredSize(new Dimension(100, 40));
-
-        frame.getContentPane().add(BorderLayout.WEST, startBtn);
-        frame.add(BorderLayout.EAST, runBtn);
-        frame.add(BorderLayout.NORTH, errorArea);
         frame.setLocationRelativeTo(null); // Set window centered
         frame.pack(); // Automatically size the window to fit it's contents
         frame.setVisible(true);
@@ -53,58 +54,9 @@ public class ViewHandler {
         return frame;
     }
 
-    private static void run() {
-        try {
-            Multimap<String, File> filesMap = createMapOfFiles(sort_directory);
-
-            List<File> latestVersions       = new ArrayList<>();
-            List<File> olderVersions        = new ArrayList<>();
-            List<File> latestExportVersions = new ArrayList<>();
-            List<File> olderExportVersions  = new ArrayList<>();
-
-            // For every array of files for a given key
-            for (String key : filesMap.keySet()) {
-
-                List<File> files = new ArrayList<>(filesMap.get(key));
-                files.sort(Comparator.comparing(File::lastModified).reversed());
-
-                boolean foundLatVer = false;
-                boolean foundLatExp = false;
-
-                for (File file : files) {
-                    if (FilenameUtils.getExtension(file.getName()).equals("flp")) {
-                        if (!foundLatVer) {
-                            latestVersions.add(file);
-                            foundLatVer = true;
-                        } else {
-                            olderVersions.add(file);
-                        }
-                    } else {
-                        if (!foundLatExp) {
-                            latestExportVersions.add(file);
-                            foundLatExp = true;
-                        } else {
-                            olderExportVersions.add(file);
-                        }
-                    }
-                }
-            }
-
-            System.out.println("Files sorted");
-
-            moveFilesToFolder(latestVersions, "Project Files");
-            moveFilesToFolder(olderVersions, "Project Files (Old)");
-            moveFilesToFolder(latestExportVersions, "Exports");
-            moveFilesToFolder(olderExportVersions, "Exports (Old)");
-
-            System.out.println("Success!");
-        } catch (Exception e) {
-            errorArea.setText(e.getMessage());
-        }
-    }
-
-    private static void moveFilesToFolder(List<File> files, String folderName) throws IOException {
-        File folderPath = Paths.get(sort_directory.getAbsolutePath(), "/" + folderName).toFile();
+    // Moves list of files to given folder
+    private static void moveFilesToFolder(List<File> files, String strFolderPath) throws IOException {
+        File folderPath = Paths.get(strFolderPath).toFile();
         folderPath.mkdir();
 
         for (File file : files) {
@@ -135,6 +87,7 @@ public class ViewHandler {
             for (File file : allFiles) {
                 if (file.isDirectory()) {
                     createMapOfFiles(file, map);
+                    //file.deleteOnExit();
                 } else {
                     String name = normaliseFileName(file.getName());
                     map.put(name, file);
@@ -144,6 +97,7 @@ public class ViewHandler {
         } else throw new Exception("Tried to sort an directory that no longer exist");
     }
 
+    // Normalizes the file name to get the "pure" project name
     static String normaliseFileName(String name) {
         return name
                 .replaceAll("\\s*\\([^)]*\\)\\s*", "")
