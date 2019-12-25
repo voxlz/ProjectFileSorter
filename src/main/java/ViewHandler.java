@@ -1,6 +1,7 @@
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
 import java.io.File;
@@ -12,6 +13,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ViewHandler {
 
@@ -35,9 +37,30 @@ public class ViewHandler {
         for (String key : map.keySet()) {
             List<File> files = new ArrayList<>(map.get(key));
             files.sort(Comparator.comparing(File::lastModified).reversed());
-            projects.add(new Project(key));
+            List<File> projectFiles = removeAudioFiles(files);
+            if (projectFiles.size() > 1) {
+                String[] strs    = files.stream().map(File::getName).toArray(String[]::new);
+                String   name    = StringUtils.getCommonPrefix(strs);
+                String   version = projectFiles.get(0).getName().substring(name.length()).replaceAll("\\..*$", "");
+                projects.add(new Project(key, version));
+            } else {
+                projects.add(new Project(key, ""));
+            }
         }
         return projects;
+    }
+
+    private static List<File> removeAudioFiles(List<File> files) {
+        return files
+                .stream()
+                .filter(file -> {
+                    String extension = FilenameUtils.getExtension(file.getName());
+                    return !extension.equals("mp3") && !extension.equals("wav");
+                }).collect(Collectors.toList());
+    }
+
+    private static String getName(List<File> files, int i) {
+        return cleanUpName(files.get(i).getName());
     }
 
     // Create an window with options
@@ -97,14 +120,18 @@ public class ViewHandler {
         } else throw new Exception("Tried to sort an directory that no longer exist");
     }
 
+    static String cleanUpName(String name) {
+        return name
+                .replaceAll("\\..+$", "") //Removes file endings
+                .trim();
+    }
+
     // Normalizes the file name to get the "pure" project name
     static String normaliseFileName(String name) {
-        return name
-                .replaceAll("\\s*\\([^)]*\\)\\s*", "")
-                .replaceAll("_.*", "")
-                .replaceAll("\\..*", "")
-                .replaceAll("v\\d", "")
-                .replaceAll("\\d$", "")
+        return cleanUpName(name)
+                .replaceAll("_.*", "") // Removes
+                .replaceAll("\\(.*?\\)", "") // Remove parenthesis
+                .replaceAll("v\\d+\\s*$", "")
                 .trim();
     }
 

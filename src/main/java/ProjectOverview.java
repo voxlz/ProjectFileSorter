@@ -27,12 +27,19 @@ public class ProjectOverview extends JFrame {
 
             @Override
             public int getColumnCount() {
-                return 1;
+                return 2;
             }
 
             @Override
             public Object getValueAt(int rowIndex, int columnIndex) {
-                return projects.get(rowIndex).name;
+                switch (columnIndex) {
+                    case 0:
+                        return projects.get(rowIndex).name;
+                    case 1:
+                        return projects.get(rowIndex).version;
+                    default:
+                        return "";
+                }
             }
 
             @Override
@@ -40,6 +47,8 @@ public class ProjectOverview extends JFrame {
                 switch (column) {
                     case 0:
                         return "Name";
+                    case 1:
+                        return "Version";
                     default:
                         return "";
                 }

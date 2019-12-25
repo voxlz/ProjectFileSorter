@@ -1,14 +1,14 @@
+import com.google.common.collect.Multimap;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.google.common.collect.Multimap;
-
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ViewHandlerTest {
 
@@ -65,13 +65,13 @@ class ViewHandlerTest {
 
     @Test
     void normaliseFileName() {
-        String s = "file name v2 (before horrible)_3";
-        assertEquals(ViewHandler.normaliseFileName(s), "file name v2");
-
         String s2 = "something-hell0(no balls)-byby(still no)_23v";
-        assertEquals(ViewHandler.normaliseFileName(s2), "something-hell0-byby");
+        assertEquals("something-hell0-byby", ViewHandler.normaliseFileName(s2));
 
-        String s3 = "no(please (oh god no))";
-        assertEquals(ViewHandler.normaliseFileName(s3), "no");
+        String s = "file name v2 (before horrible)_3";
+        assertEquals("file name", ViewHandler.normaliseFileName(s));
+
+        String s3 = "12-13-1223";
+        assertEquals("12-13-1223", ViewHandler.normaliseFileName(s3));
     }
 }
