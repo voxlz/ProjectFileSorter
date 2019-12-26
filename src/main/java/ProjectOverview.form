@@ -34,10 +34,11 @@
           <component id="45ecf" class="javax.swing.JTable" binding="tblProjects">
             <constraints/>
             <properties>
-              <autoCreateRowSorter value="false"/>
+              <autoCreateRowSorter value="true"/>
+              <autoResizeMode value="2"/>
             </properties>
             <clientProperties>
-              <Table.isFileList class="java.lang.Boolean" value="true"/>
+              <Table.isFileList class="java.lang.Boolean" value="false"/>
             </clientProperties>
           </component>
         </children>

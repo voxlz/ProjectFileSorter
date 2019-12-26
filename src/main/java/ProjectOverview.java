@@ -1,15 +1,18 @@
 import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableColumn;
 import java.util.List;
 
-public class ProjectOverview extends JFrame {
+
+public class ProjectOverview extends JFrame implements TableModelListener {
     public  JPanel      panel;
     private JTable      tblProjects;
     private JButton     btnOpen;
     private JButton     btnOption;
     private JScrollPane scrollPane;
 
-    public ProjectOverview(List<Project> projects) {
+    ProjectOverview(List<Project> projects) {
         updateTable(projects);
 
         btnOption.addActionListener(e -> System.out.println("hi"));
@@ -18,42 +21,17 @@ public class ProjectOverview extends JFrame {
         });
     }
 
-    public void updateTable(List<Project> projects) {
-        AbstractTableModel model = new AbstractTableModel() {
-            @Override
-            public int getRowCount() {
-                return projects.size();
-            }
-
-            @Override
-            public int getColumnCount() {
-                return 2;
-            }
-
-            @Override
-            public Object getValueAt(int rowIndex, int columnIndex) {
-                switch (columnIndex) {
-                    case 0:
-                        return projects.get(rowIndex).name;
-                    case 1:
-                        return projects.get(rowIndex).version;
-                    default:
-                        return "";
-                }
-            }
-
-            @Override
-            public String getColumnName(int column) {
-                switch (column) {
-                    case 0:
-                        return "Name";
-                    case 1:
-                        return "Version";
-                    default:
-                        return "";
-                }
-            }
-        };
+    private void updateTable(List<Project> projects) {
+        ProjectTableModel model = new ProjectTableModel(projects);
+        model.addTableModelListener(this);
         tblProjects.setModel(model);
+        TableColumn column = tblProjects.getColumnModel().getColumn(2);
+        column.setCellEditor(new DefaultCellEditor(new JComboBox<>(ProjectStatus.values())));
+    }
+
+    @Override
+    public void tableChanged(TableModelEvent e) {
+        System.out.println(e);
+        System.out.println("hi someting changed");
     }
 }

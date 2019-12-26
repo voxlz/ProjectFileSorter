@@ -19,14 +19,12 @@ public class ViewHandler {
 
     public static void main(String[] args) {
         JFileChooser fileChooser = createFileChooser();
-        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            try {
-                Multimap<String, File> mapOfFiles = createMapOfFiles(fileChooser.getSelectedFile());
-                List<Project>          projects   = extractMapToList(mapOfFiles);
-                createWindow(projects);
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
+        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) try {
+            Multimap<String, File> mapOfFiles = createMapOfFiles(fileChooser.getSelectedFile());
+            List<Project>          projects   = extractMapToList(mapOfFiles);
+            createWindow(projects);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 
@@ -41,10 +39,11 @@ public class ViewHandler {
             if (projectFiles.size() > 1) {
                 String[] strs    = files.stream().map(File::getName).toArray(String[]::new);
                 String   name    = StringUtils.getCommonPrefix(strs);
-                String   version = projectFiles.get(0).getName().substring(name.length()).replaceAll("\\..*$", "");
-                projects.add(new Project(key, version));
+                String   version = projectFiles.get(0).getName().substring(name.length());
+                version = cleanUpName(version).replaceAll("_", "");
+                projects.add(new Project(key, version, ProjectStatus.Prototype, false));
             } else {
-                projects.add(new Project(key, ""));
+                projects.add(new Project(key, "", ProjectStatus.Prototype, false));
             }
         }
         return projects;
@@ -64,22 +63,19 @@ public class ViewHandler {
     }
 
     // Create an window with options
-    private static JFrame createWindow(List<Project> projects) {
+    private static void createWindow(List<Project> projects) {
         JFrame frame = new JFrame("ProjectOverview");
         frame.setContentPane(new ProjectOverview(projects).panel);
-
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        frame.setLocationRelativeTo(null); // Set window centered
-        frame.pack(); // Automatically size the window to fit it's contents
+        frame.setLocationRelativeTo(null);                      // Set window centered
+        frame.pack();                                           // Automatically size the window to fit it's contents
         frame.setVisible(true);
-
-        return frame;
     }
 
     // Moves list of files to given folder
     private static void moveFilesToFolder(List<File> files, String strFolderPath) throws IOException {
         File folderPath = Paths.get(strFolderPath).toFile();
+        //noinspection ResultOfMethodCallIgnored
         folderPath.mkdir();
 
         for (File file : files) {
@@ -120,7 +116,7 @@ public class ViewHandler {
         } else throw new Exception("Tried to sort an directory that no longer exist");
     }
 
-    static String cleanUpName(String name) {
+    private static String cleanUpName(String name) {
         return name
                 .replaceAll("\\..+$", "") //Removes file endings
                 .trim();
