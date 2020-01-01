@@ -29,7 +29,7 @@ public class ProjectTableModel extends AbstractTableModel {
             case 2:
                 return project.status;
             case 3:
-                return project.released;
+                return project.rating;
             default:
                 return "";
         }
@@ -45,7 +45,7 @@ public class ProjectTableModel extends AbstractTableModel {
             case 2:
                 return "Status";
             case 3:
-                return "Released";
+                return "Rating";
             default:
                 return "";
         }
@@ -57,7 +57,7 @@ public class ProjectTableModel extends AbstractTableModel {
             case 2:
                 return ProjectStatus.class;
             case 3:
-                return Boolean.class;
+                return ProjectRating.class;
             default:
                 return String.class;
         }
@@ -65,7 +65,15 @@ public class ProjectTableModel extends AbstractTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return true;
+        switch (columnIndex) {
+            case 0:
+            case 2:
+            case 3:
+            case 4:
+                return true;
+            default:
+                return false;
+        }
     }
 
     @Override
@@ -82,7 +90,7 @@ public class ProjectTableModel extends AbstractTableModel {
                 project.status = (ProjectStatus) aValue;
                 break;
             case 3:
-                project.released = (Boolean) aValue;
+                project.rating = (ProjectRating) aValue;
                 break;
             default:
 

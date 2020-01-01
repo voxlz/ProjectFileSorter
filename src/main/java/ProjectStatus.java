@@ -1,1 +1,1 @@
-enum ProjectStatus {Prototype, WIP, Dropped, On_Hold, Done}
+enum ProjectStatus {Prototype, WIP, Done, Released, Dropped, OnHold}

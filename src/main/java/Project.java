@@ -1,13 +1,13 @@
 public class Project {
     String        name;
     String        version;
-    boolean       released;
     ProjectStatus status;
+    ProjectRating rating;
 
-    public Project(String name, String version, ProjectStatus status, boolean released) {
+    public Project(String name, String version, ProjectStatus status, ProjectRating rating) {
         this.name = name;
         this.version = version;
-        this.released = released;
         this.status = status;
+        this.rating = rating;
     }
 }

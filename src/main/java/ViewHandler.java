@@ -41,9 +41,9 @@ public class ViewHandler {
                 String   name    = StringUtils.getCommonPrefix(strs);
                 String   version = projectFiles.get(0).getName().substring(name.length());
                 version = cleanUpName(version).replaceAll("_", "");
-                projects.add(new Project(key, version, ProjectStatus.Prototype, false));
+                projects.add(new Project(key, version, ProjectStatus.Prototype, ProjectRating.zero));
             } else {
-                projects.add(new Project(key, "", ProjectStatus.Prototype, false));
+                projects.add(new Project(key, "", ProjectStatus.Prototype, ProjectRating.zero));
             }
         }
         return projects;
