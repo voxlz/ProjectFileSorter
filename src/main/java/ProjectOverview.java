@@ -16,9 +16,7 @@ public class ProjectOverview extends JFrame implements TableModelListener {
         updateTable(projects);
 
         btnOption.addActionListener(e -> System.out.println("hi"));
-        btnOpen.addActionListener(e -> {
-
-        });
+      btnOpen.addActionListener(e -> System.out.println("bye"));
     }
 
     private void updateTable(List<Project> projects) {

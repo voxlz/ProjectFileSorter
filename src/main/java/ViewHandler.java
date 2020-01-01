@@ -10,17 +10,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ViewHandler {
 
+    private static String projectExtension = "flp";
+
     public static void main(String[] args) {
         JFileChooser fileChooser = createFileChooser();
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) try {
-            Multimap<String, File> mapOfFiles = createMapOfFiles(fileChooser.getSelectedFile());
+            Multimap<String, File> mapOfAllFiles = createMapOfFiles(fileChooser.getSelectedFile());
+            Multimap<String, File> mapOfFiles = removeEntriesWithoutProjectFile(mapOfAllFiles);
             List<Project>          projects   = extractMapToList(mapOfFiles);
             createWindow(projects);
         } catch (Exception e) {
@@ -106,7 +107,6 @@ public class ViewHandler {
             for (File file : allFiles) {
                 if (file.isDirectory()) {
                     createMapOfFiles(file, map);
-                    //file.deleteOnExit();
                 } else {
                     String name = normaliseFileName(file.getName());
                     map.put(name, file);
@@ -114,6 +114,30 @@ public class ViewHandler {
             }
             return map;
         } else throw new Exception("Tried to sort an directory that no longer exist");
+    }
+
+    /**
+     * Removes all entries in a map which do not have a least one DAW project file associated
+     * with them.
+     *
+     * @param map the map to check
+     * @return the new map
+     */
+    private static Multimap<String, File> removeEntriesWithoutProjectFile(Multimap<String, File> map) {
+        Set<String> keys = new HashSet<>(map.keySet()); // Make a copy of keys
+        for (String key : keys) {
+            long count = map.get(key)
+                    .stream()
+                    .filter(f -> {
+                        String extension = FilenameUtils.getExtension(f.getName());
+                        return extension.equals(projectExtension);
+                    })
+                    .count();
+            if (count < 1) {
+                map.removeAll(key);
+            }
+        }
+        return map;
     }
 
     private static String cleanUpName(String name) {
