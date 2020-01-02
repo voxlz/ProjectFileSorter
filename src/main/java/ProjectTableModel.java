@@ -69,7 +69,6 @@ public class ProjectTableModel extends AbstractTableModel {
             case 0:
             case 2:
             case 3:
-            case 4:
                 return true;
             default:
                 return false;
@@ -93,7 +92,9 @@ public class ProjectTableModel extends AbstractTableModel {
                 project.rating = (ProjectRating) aValue;
                 break;
             default:
-
+                System.out.println("Something broke at set value");
         }
     }
+
+
 }

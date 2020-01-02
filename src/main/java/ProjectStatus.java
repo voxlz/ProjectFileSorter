@@ -1,3 +1,3 @@
 enum ProjectStatus {
-  Prototype, WIP, Done, Released, Dropped, OnHold
+  Dropped, OnHold, Prototype, WIP, Done, Released
 }

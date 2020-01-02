@@ -23,6 +23,7 @@ public class ProjectOverview extends JFrame implements TableModelListener {
         ProjectTableModel model = new ProjectTableModel(projects);
         model.addTableModelListener(this);
         tblProjects.setModel(model);
+      tblProjects.setAutoCreateColumnsFromModel(false);
         TableColumn column = tblProjects.getColumnModel().getColumn(2);
         column.setCellEditor(new DefaultCellEditor(new JComboBox<>(ProjectStatus.values())));
     }
