@@ -14,18 +14,17 @@ public class ProjectOverview extends JFrame implements TableModelListener {
 
     ProjectOverview(List<Project> projects) {
         updateTable(projects);
-
         btnOption.addActionListener(e -> System.out.println("hi"));
-      btnOpen.addActionListener(e -> System.out.println("bye"));
+        btnOpen.addActionListener(e -> System.out.println("bye"));
     }
 
     private void updateTable(List<Project> projects) {
         ProjectTableModel model = new ProjectTableModel(projects);
-        model.addTableModelListener(this);
         tblProjects.setModel(model);
-      tblProjects.setAutoCreateColumnsFromModel(false);
-        TableColumn column = tblProjects.getColumnModel().getColumn(2);
-        column.setCellEditor(new DefaultCellEditor(new JComboBox<>(ProjectStatus.values())));
+        TableColumn column2 = tblProjects.getColumnModel().getColumn(2);
+        TableColumn column3 = tblProjects.getColumnModel().getColumn(3);
+        column2.setCellEditor(new DefaultCellEditor(new JComboBox<>(ProjectStatus.values())));
+        column3.setCellEditor(new DefaultCellEditor(new JComboBox<>(ProjectRating.values())));
     }
 
     @Override

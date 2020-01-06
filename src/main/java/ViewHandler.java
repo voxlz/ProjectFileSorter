@@ -1,7 +1,6 @@
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.*;
 import java.io.File;
@@ -10,10 +9,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.FileTime;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ViewHandler {
 
@@ -36,62 +35,10 @@ public class ViewHandler {
 
         // For every array of files for a given key
         for (String key : map.keySet()) {
-            List<File> files = new ArrayList<>(map.get(key));
-            files.sort(Comparator.comparing(File::lastModified).reversed());
-            List<File> noAudioFiles = removeAudioFiles(files);
-            Date       lastModified = getLastModifiedDate(noAudioFiles);
-            Date       created      = getCreationDate(noAudioFiles);
-
-
-            if (noAudioFiles.size() > 1) {
-                String version = getVersion(files, noAudioFiles);
-                projects.add(new Project(key, version, ProjectStatus.Prototype, ProjectRating.Zero, lastModified, created));
-            } else {
-                projects.add(new Project(key, "1", ProjectStatus.Prototype, ProjectRating.Zero, lastModified, created));
-            }
+            List<File> files = (List<File>) map.get(key);
+            projects.add(new Project(files, key));
         }
         return projects;
-    }
-
-    private static Date getCreationDate(List<File> files) {
-        List<Date> createds = new ArrayList<>();
-        for (File file : files) {
-            try {
-                FileTime creationTime = (FileTime) Files.getAttribute(file.toPath(), "creationTime");
-                createds.add(new Date(creationTime.toMillis()));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        Stream<Date> sorted = createds.stream().sorted(Comparator.naturalOrder());
-        return sorted.findFirst().get();
-    }
-
-    private static Date getLastModifiedDate(List<File> files) {
-        List<Date> lastModifieds = new ArrayList<>();
-        for (File file : files) lastModifieds.add(new Date(file.lastModified()));
-        return lastModifieds.stream().max(Comparator.naturalOrder()).get();
-    }
-
-    private static String getVersion(List<File> files, List<File> projectFiles) {
-        String[] strs    = files.stream().map(File::getName).toArray(String[]::new);
-        String   name    = StringUtils.getCommonPrefix(strs);
-        String   version = projectFiles.get(0).getName().substring(name.length());
-        version = cleanUpName(version).replaceAll("_", "");
-        return version;
-    }
-
-    private static List<File> removeAudioFiles(List<File> files) {
-        return files
-                .stream()
-                .filter(file -> {
-                    String extension = FilenameUtils.getExtension(file.getName());
-                    return !extension.equals("mp3") && !extension.equals("wav");
-                }).collect(Collectors.toList());
-    }
-
-    private static String getName(List<File> files, int i) {
-        return cleanUpName(files.get(i).getName());
     }
 
     // Create an window with options
@@ -102,26 +49,6 @@ public class ViewHandler {
         frame.setLocationRelativeTo(null);                      // Set window centered
         frame.pack();                                           // Automatically size the window to fit it's contents
         frame.setVisible(true);
-    }
-
-    // Moves list of files to given folder
-    private static void moveFilesToFolder(List<File> files, String strFolderPath) throws IOException {
-        File folderPath = Paths.get(strFolderPath).toFile();
-        //noinspection ResultOfMethodCallIgnored
-        folderPath.mkdir();
-
-        for (File file : files) {
-            Path dst = Paths.get(folderPath.getAbsolutePath(), file.getName());
-            Path src = file.toPath();
-            if (dst.toFile().exists() && !src.equals(dst)) {
-                String dstStr  = dst.toString();
-                String fileExt = FilenameUtils.getExtension(dstStr);
-                String newPath = FilenameUtils.removeExtension(dstStr) + " (Copy)." + fileExt;
-                Files.move(src, new File(newPath).toPath(), StandardCopyOption.ATOMIC_MOVE);
-            } else {
-                Files.move(src, dst, StandardCopyOption.ATOMIC_MOVE);
-            }
-        }
     }
 
     // Create a map of all files based of their normalised name
@@ -171,7 +98,7 @@ public class ViewHandler {
         return map;
     }
 
-    private static String cleanUpName(String name) {
+    static String cleanUpName(String name) {
         return name
                 .replaceAll("\\..+$", "") //Removes file endings
                 .trim();
@@ -194,5 +121,25 @@ public class ViewHandler {
         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         fc.setCurrentDirectory(new File("D:/Music Production/FL Projects"));
         return fc;
+    }
+
+    // Moves list of files to given folder
+    private static void moveFilesToFolder(List<File> files, String strFolderPath) throws IOException {
+        File folderPath = Paths.get(strFolderPath).toFile();
+        //noinspection ResultOfMethodCallIgnored
+        folderPath.mkdir();
+
+        for (File file : files) {
+            Path dst = Paths.get(folderPath.getAbsolutePath(), file.getName());
+            Path src = file.toPath();
+            if (dst.toFile().exists() && !src.equals(dst)) {
+                String dstStr  = dst.toString();
+                String fileExt = FilenameUtils.getExtension(dstStr);
+                String newPath = FilenameUtils.removeExtension(dstStr) + " (Copy)." + fileExt;
+                Files.move(src, new File(newPath).toPath(), StandardCopyOption.ATOMIC_MOVE);
+            } else {
+                Files.move(src, dst, StandardCopyOption.ATOMIC_MOVE);
+            }
+        }
     }
 }

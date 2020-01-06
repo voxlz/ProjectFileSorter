@@ -61,22 +61,6 @@ public class ProjectTableModel extends AbstractTableModel {
     }
 
     @Override
-    public Class<?> getColumnClass(int columnIndex) {
-        switch (columnIndex) {
-            case 2:
-                return ProjectStatus.class;
-            case 3:
-                return ProjectRating.class;
-            case 4:
-                return Date.class;
-            case 5:
-                return Date.class;
-            default:
-                return String.class;
-        }
-    }
-
-    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         switch (columnIndex) {
             case 0:
@@ -85,6 +69,18 @@ public class ProjectTableModel extends AbstractTableModel {
                 return true;
             default:
                 return false;
+        }
+    }
+
+    // Seems like this affects sorting, and display to some sort
+    @Override
+    public Class<?> getColumnClass(int columnIndex) {
+        switch (columnIndex) {
+            case 4:
+            case 5:
+                return Date.class;
+            default:
+                return String.class;
         }
     }
 
