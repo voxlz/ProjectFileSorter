@@ -18,6 +18,7 @@ public class Project {
     ProjectRating rating;
     Date          lastModified;
     Date          created;
+    File          latestExport = null;
 
     public Project(String name, String version, ProjectStatus status, ProjectRating rating, Date lastModified, Date created) {
         this.name = name;
@@ -29,13 +30,16 @@ public class Project {
     }
 
     public Project(List<File> files, String key) {
-        List<File> noAudioFiles = removeAudioFiles(files);
-        Date       lastModified = getLastModifiedDate(noAudioFiles);
-        Date       created      = getCreationDate(noAudioFiles);
+        List<File> projectFiles = removeAudioFiles(files);
+        List<File> audioFiles   = onlyAdioFiles(files);
+
+        Date lastModified = getLastModifiedDate(projectFiles);
+        Date created      = getCreationDate(projectFiles);
+        latestExport = getLastestExport(audioFiles);
 
         String ver = "1";
-        if (noAudioFiles.size() > 1) {
-            ver = getVersion(files, noAudioFiles);
+        if (projectFiles.size() > 1) {
+            ver = getVersion(files, projectFiles);
         }
 
         this.name = key;
@@ -44,6 +48,15 @@ public class Project {
         this.rating = ProjectRating.Zero;
         this.lastModified = lastModified;
         this.created = created;
+    }
+
+    private static List<File> onlyAdioFiles(List<File> files) {
+        return files
+                .stream()
+                .filter(file -> {
+                    String extension = FilenameUtils.getExtension(file.getName());
+                    return extension.equals("mp3") || extension.equals("wav");
+                }).collect(Collectors.toList());
     }
 
     private static Date getCreationDate(List<File> files) {
@@ -79,5 +92,12 @@ public class Project {
                     String extension = FilenameUtils.getExtension(file.getName());
                     return !extension.equals("mp3") && !extension.equals("wav");
                 }).collect(Collectors.toList());
+    }
+
+    private File getLastestExport(List<File> audioFiles) {
+        return audioFiles.stream()
+                .sorted(Comparator.comparingLong(File::lastModified))
+                .findFirst()
+                .orElse(null);
     }
 }
