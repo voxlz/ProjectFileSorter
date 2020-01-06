@@ -1,4 +1,5 @@
 import javax.swing.table.AbstractTableModel;
+import java.util.Date;
 import java.util.List;
 
 public class ProjectTableModel extends AbstractTableModel {
@@ -15,7 +16,7 @@ public class ProjectTableModel extends AbstractTableModel {
 
     @Override
     public int getColumnCount() {
-        return 4;
+        return 6;
     }
 
     @Override
@@ -30,6 +31,10 @@ public class ProjectTableModel extends AbstractTableModel {
                 return project.status;
             case 3:
                 return project.rating;
+            case 4:
+                return project.lastModified;
+            case 5:
+                return project.created;
             default:
                 return "";
         }
@@ -46,6 +51,10 @@ public class ProjectTableModel extends AbstractTableModel {
                 return "Status";
             case 3:
                 return "Rating";
+            case 4:
+                return "Last Modified";
+            case 5:
+                return "Created";
             default:
                 return "";
         }
@@ -58,6 +67,10 @@ public class ProjectTableModel extends AbstractTableModel {
                 return ProjectStatus.class;
             case 3:
                 return ProjectRating.class;
+            case 4:
+                return Date.class;
+            case 5:
+                return Date.class;
             default:
                 return String.class;
         }
@@ -90,6 +103,12 @@ public class ProjectTableModel extends AbstractTableModel {
                 break;
             case 3:
                 project.rating = (ProjectRating) aValue;
+                break;
+            case 4:
+                project.lastModified = (Date) aValue;
+                break;
+            case 5:
+                project.created = (Date) aValue;
                 break;
             default:
                 System.out.println("Something broke at set value");

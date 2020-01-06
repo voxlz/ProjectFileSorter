@@ -10,8 +10,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ViewHandler {
 
@@ -36,19 +38,47 @@ public class ViewHandler {
         for (String key : map.keySet()) {
             List<File> files = new ArrayList<>(map.get(key));
             files.sort(Comparator.comparing(File::lastModified).reversed());
-            List<File> projectFiles = removeAudioFiles(files);
-            if (projectFiles.size() > 1) {
-                String[] strs    = files.stream().map(File::getName).toArray(String[]::new);
-                String   name    = StringUtils.getCommonPrefix(strs);
-                String   version = projectFiles.get(0).getName().substring(name.length());
-                version = cleanUpName(version).replaceAll("_", "");
-                projects.add(new Project(key, version, ProjectStatus.Prototype,
-                        ProjectRating.Zero));
+            List<File> noAudioFiles = removeAudioFiles(files);
+            Date       lastModified = getLastModifiedDate(noAudioFiles);
+            Date       created      = getCreationDate(noAudioFiles);
+
+
+            if (noAudioFiles.size() > 1) {
+                String version = getVersion(files, noAudioFiles);
+                projects.add(new Project(key, version, ProjectStatus.Prototype, ProjectRating.Zero, lastModified, created));
             } else {
-                projects.add(new Project(key, "", ProjectStatus.Prototype, ProjectRating.Zero));
+                projects.add(new Project(key, "1", ProjectStatus.Prototype, ProjectRating.Zero, lastModified, created));
             }
         }
         return projects;
+    }
+
+    private static Date getCreationDate(List<File> files) {
+        List<Date> createds = new ArrayList<>();
+        for (File file : files) {
+            try {
+                FileTime creationTime = (FileTime) Files.getAttribute(file.toPath(), "creationTime");
+                createds.add(new Date(creationTime.toMillis()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        Stream<Date> sorted = createds.stream().sorted(Comparator.naturalOrder());
+        return sorted.findFirst().get();
+    }
+
+    private static Date getLastModifiedDate(List<File> files) {
+        List<Date> lastModifieds = new ArrayList<>();
+        for (File file : files) lastModifieds.add(new Date(file.lastModified()));
+        return lastModifieds.stream().max(Comparator.naturalOrder()).get();
+    }
+
+    private static String getVersion(List<File> files, List<File> projectFiles) {
+        String[] strs    = files.stream().map(File::getName).toArray(String[]::new);
+        String   name    = StringUtils.getCommonPrefix(strs);
+        String   version = projectFiles.get(0).getName().substring(name.length());
+        version = cleanUpName(version).replaceAll("_", "");
+        return version;
     }
 
     private static List<File> removeAudioFiles(List<File> files) {
