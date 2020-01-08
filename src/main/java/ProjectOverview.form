@@ -23,7 +23,7 @@
         <properties/>
         <border type="none" title=""/>
         <children>
-          <component id="45ecf" class="javax.swing.JTable" binding="tblProjects">
+          <component id="45ecf" class="javax.swing.JTable" binding="tblProjects" custom-create="true">
             <constraints/>
             <properties>
               <autoCreateColumnsFromModel value="true"/>

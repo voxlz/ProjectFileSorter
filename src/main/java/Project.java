@@ -31,7 +31,7 @@ public class Project {
 
     public Project(List<File> files, String key) {
         List<File> projectFiles = removeAudioFiles(files);
-        List<File> audioFiles   = onlyAdioFiles(files);
+        List<File> audioFiles   = onlyAudioFiles(files);
 
         Date lastModified = getLastModifiedDate(projectFiles);
         Date created      = getCreationDate(projectFiles);
@@ -50,7 +50,7 @@ public class Project {
         this.created = created;
     }
 
-    private static List<File> onlyAdioFiles(List<File> files) {
+    private static List<File> onlyAudioFiles(List<File> files) {
         return files
                 .stream()
                 .filter(file -> {
