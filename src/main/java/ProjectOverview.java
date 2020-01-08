@@ -7,11 +7,10 @@ import javax.swing.table.TableColumn;
 import java.io.File;
 import java.util.List;
 
-
 public class ProjectOverview {
     public  JPanel      panel;
     private JTable      tblProjects;
-    MediaPlayer mediaPlayer;
+    private MediaPlayer mediaPlayer;
     private JButton     btnOption;
     private JScrollPane scrollPane;
     boolean playing = false;
@@ -25,7 +24,7 @@ public class ProjectOverview {
         column2.setCellEditor(new DefaultCellEditor(new JComboBox<>(ProjectStatus.values())));
         column3.setCellEditor(new DefaultCellEditor(new JComboBox<>(ProjectRating.values())));
 
-        new JFXPanel(); // Prepares the thing or whatnot
+        new JFXPanel(); // Prepares for audio playback for some reason.
 
         btnOption.addActionListener(e -> {
         });
@@ -40,7 +39,8 @@ public class ProjectOverview {
                 System.out.println("play");
 
                 int  row          = tblProjects.getSelectedRow();
-                File latestExport = model.getProjectAt(row).latestExport;
+                int  actualRow    = tblProjects.convertRowIndexToModel(row);
+                File latestExport = model.getProjectAt(actualRow).latestExport;
 
                 if (latestExport != null) {
                     Media song = new Media(latestExport.toURI().toString());

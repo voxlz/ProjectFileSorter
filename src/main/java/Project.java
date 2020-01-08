@@ -96,7 +96,7 @@ public class Project {
 
     private File getLastestExport(List<File> audioFiles) {
         return audioFiles.stream()
-                .sorted(Comparator.comparingLong(File::lastModified))
+                .sorted(Comparator.comparingLong(File::lastModified).reversed())
                 .findFirst()
                 .orElse(null);
     }
