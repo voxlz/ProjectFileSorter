@@ -13,42 +13,73 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.prefs.Preferences;
 
-public class ViewHandler {
+public class FileLoader {
+    private static final String databasePath = System.getProperty("user.home") + File.separator + ".projectzDatabase";
 
     private static String projectExtension = "flp";
+    public static File   database;
 
-    public static void main(String[] args) {
-        JFileChooser fileChooser = createFileChooser();
-        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) try {
-            Multimap<String, File> mapOfAllFiles = createMapOfFiles(fileChooser.getSelectedFile());
-            Multimap<String, File> mapOfFiles = removeEntriesWithoutProjectFile(mapOfAllFiles);
-            List<Project> projects = extractMapToList(mapOfFiles);
-            createWindow(projects);
+    /** Prompts user to select a folder and returns all the projects in said folder. */
+    public static List<Project> getProjects() {
+        database = getDatabase();
+        File selectedFile = getProjectsPath();
+
+        saveFilePath(selectedFile);
+        Multimap<String, File> mapOfAllFiles = null;
+        selectedFile.getAbsolutePath();
+        try {
+            mapOfAllFiles = createMapOfFiles(selectedFile);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
+        Multimap<String, File> mapOfFiles = removeEntriesWithoutProjectFile(mapOfAllFiles);
+        List<Project> projects = extractMapToList(mapOfFiles);
+        return projects;
+    }
+
+    private static File getProjectsPath() {
+        File projectsPath = loadFilePath();
+        if (projectsPath == null) {
+            JFileChooser fc = createFileChooser();
+            if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                return fc.getSelectedFile();
+            }
+        }
+        return projectsPath;
+    }
+
+    private static File getDatabase() {
+        File   database     = new File(databasePath);
+        if (!database.exists()) {
+            int result = JOptionPane.showConfirmDialog(null, "Can't find a database, do you want to create a new one?");
+            if (result == JOptionPane.OK_OPTION) {
+                try {
+                    if (database.createNewFile()) {
+                        Files.setAttribute(database.toPath(), "dos:hidden", true); // Hidden for Win
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Could not create a new database");
+                    }
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(null, "Error occurred while creating a new database");
+                    e.printStackTrace();
+                }
+            }
+        }
+        return database;
     }
 
     private static List<Project> extractMapToList(Multimap<String, File> map) {
         List<Project> projects = new ArrayList<>();
 
+
         // For every array of files for a given key
         for (String key : map.keySet()) {
             List<File> files = (List<File>) map.get(key);
-            projects.add(new Project(files, key));
+            projects.add(new Project(key, files));
         }
         return projects;
-    }
-
-    // Create an window with options
-    private static void createWindow(List<Project> projects) {
-        JFrame frame = new JFrame("ProjectOverview");
-        frame.setContentPane(new ProjectOverview(projects).panel);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);                      // Set window centered
-        frame.pack();                                           // Automatically size the window to fit it's contents
-        frame.setVisible(true);
     }
 
     // Create a map of all files based of their normalised name
@@ -113,20 +144,51 @@ public class ViewHandler {
                 .trim();
     }
 
-    //Create a file chooser
+    /** Create and configures a file chooser. */
     private static JFileChooser createFileChooser() {
         final JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new java.io.File("."));
         fc.setDialogTitle("Select the folder containing project files and audio exports");
         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        fc.setCurrentDirectory(new File("D:/Music Production/FL Projects"));
+        fc.setCurrentDirectory(loadFilePath());
         return fc;
+    }
+
+    /**
+     * Returns the person file preference, i.e. the file that was last opened.
+     * The preference is read from the OS specific registry. If no such
+     * preference can be found, null is returned.
+     *
+     * @return
+     */
+    public static File loadFilePath() {
+        Preferences prefs = Preferences.userNodeForPackage(Main.class);
+        String filePath = prefs.get("filePath", null);
+        if (filePath != null) {
+            return new File(filePath);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Sets the file path of the currently loaded file. The path is persisted in
+     * the OS specific registry.
+     *
+     * @param file the file or null to remove the path
+     */
+    public static void saveFilePath(File file) {
+        Preferences prefs = Preferences.userNodeForPackage(Main.class);
+        if (file != null) {
+            prefs.put("filePath", file.getPath());
+        } else {
+            prefs.remove("filePath");
+        }
     }
 
     // Moves list of files to given folder
     private static void moveFilesToFolder(List<File> files, String strFolderPath) throws IOException {
         File folderPath = Paths.get(strFolderPath).toFile();
-        //noinspection ResultOfMethodCallIgnored
         folderPath.mkdir();
 
         for (File file : files) {

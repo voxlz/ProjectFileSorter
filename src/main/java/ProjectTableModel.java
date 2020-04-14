@@ -1,12 +1,14 @@
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.util.Date;
 import java.util.List;
 
 public class ProjectTableModel extends AbstractTableModel {
-    private List<Project> projects;
+    private       List<Project>  projects;
 
     ProjectTableModel(List<Project> projects) {
         this.projects = projects;
+        DatabaseWriter.saveToDatabase(projects);
     }
 
     public Project getProjectAt(int rowIndex) {
@@ -28,7 +30,7 @@ public class ProjectTableModel extends AbstractTableModel {
         Project project = projects.get(rowIndex);
         switch (columnIndex) {
             case 0:
-                return project.name;
+                return project.getName();
             case 1:
                 return project.version;
             case 2:
@@ -80,6 +82,12 @@ public class ProjectTableModel extends AbstractTableModel {
     @Override
     public Class<?> getColumnClass(int columnIndex) {
         switch (columnIndex) {
+            case 1:
+                return Integer.class;
+            case 2:
+                return ProjectStatus.class;
+            case 3:
+                return ProjectRating.class;
             case 4:
             case 5:
                 return Date.class;
@@ -93,10 +101,14 @@ public class ProjectTableModel extends AbstractTableModel {
         Project project = projects.get(rowIndex);
         switch (columnIndex) {
             case 0:
-                project.name = (String) aValue;
+                int result = JOptionPane.showConfirmDialog(null, "Do you want to rename all files" +
+                        "associated with this project?");
+                if (result == JOptionPane.OK_OPTION) {
+                    project.setName((String) aValue);
+                }
                 break;
             case 1:
-                project.version = (String) aValue;
+                project.version = (Integer) aValue;
                 break;
             case 2:
                 project.status = (ProjectStatus) aValue;
@@ -113,7 +125,6 @@ public class ProjectTableModel extends AbstractTableModel {
             default:
                 System.out.println("Something broke at set value");
         }
+        DatabaseWriter.saveToDatabase(projects);
     }
-
-
 }

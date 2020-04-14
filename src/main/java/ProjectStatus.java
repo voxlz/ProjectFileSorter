@@ -1,3 +1,3 @@
 enum ProjectStatus {
-  Dropped, OnHold, Prototype, WIP, Done, Released
+  Done, Mastering, Mixing, Polishing, Composing, Idea, Released, Dropped
 }

@@ -10,7 +10,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class ViewHandlerTest {
+class MainTest {
 
     @BeforeEach
     void setUp() {
@@ -33,7 +33,7 @@ class ViewHandlerTest {
             new File("C:\\ProjectSorterTest\\Project_2").createNewFile();
             new File("C:\\ProjectSorterTest\\HappyLife").createNewFile();
 
-            Multimap<String, File> map = ViewHandler.createMapOfFiles(new File("C:\\ProjectSorterTest"));
+            Multimap<String, File> map = FileLoader.createMapOfFiles(new File("C:\\ProjectSorterTest"));
 
             assertTrue(map.size() == 3);
             assertTrue(map.keySet().size() == 2);
@@ -44,7 +44,7 @@ class ViewHandlerTest {
             new File("C:\\ProjectSorterTest\\Folder\\HappyLife_3").createNewFile();
             new File("C:\\ProjectSorterTest\\Folder\\HappyLife_2").createNewFile();
 
-            map = ViewHandler.createMapOfFiles(new File("C:\\ProjectSorterTest"));
+            map = FileLoader.createMapOfFiles(new File("C:\\ProjectSorterTest"));
 
             assertTrue(map.size() == 6);
             assertTrue(map.keySet().size() == 3);
@@ -66,12 +66,12 @@ class ViewHandlerTest {
     @Test
     void normaliseFileName() {
         String s2 = "something-hell0(no balls)-byby(still no)_23v";
-        assertEquals("something-hell0-byby", ViewHandler.normaliseFileName(s2));
+        assertEquals("something-hell0-byby", FileLoader.normaliseFileName(s2));
 
         String s = "file name v2 (before horrible)_3";
-        assertEquals("file name", ViewHandler.normaliseFileName(s));
+        assertEquals("file name", FileLoader.normaliseFileName(s));
 
         String s3 = "12-13-1223";
-        assertEquals("12-13-1223", ViewHandler.normaliseFileName(s3));
+        assertEquals("12-13-1223", FileLoader.normaliseFileName(s3));
     }
 }
