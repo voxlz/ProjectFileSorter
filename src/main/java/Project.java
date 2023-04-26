@@ -1,4 +1,6 @@
+import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -12,55 +14,52 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Project {
-    private String       name;
-    public Integer       version;
+    private String name;
+    public Integer version;
     public ProjectStatus status = ProjectStatus.Idea;
     public ProjectRating rating = ProjectRating.Zero;
-    public Date          lastModified;
-    public Date          created;
+    public Date lastModified;
+    public Date created;
 
-    File latestExport  = null;
+    File latestExport = null;
     File latestProject = null;
 
-    List<File> files = new ArrayList<>();
+    public List<File> files = new ArrayList<>();
 
     // Required for json parsing
     public Project() {
         super();
     }
 
-    public Project(String name, List<File> files) {
+    public Project(String name, List<File> files) throws StreamReadException, DatabindException, IOException {
         this.name = name;
         this.files = files;
 
         List<File> projectFiles = removeExportFiles(files);
-        List<File> exportFiles   = onlyExportFiles(files);
+        List<File> exportFiles = onlyExportFiles(files);
 
-        latestExport    = getLatestExport(exportFiles);
-        latestProject   = getLatestProject(projectFiles);
-        version         = projectFiles.size();
-        lastModified    = getLastModifiedDate(projectFiles);
-        created         = getCreationDate(files);
+        latestExport = getLatestExport(exportFiles);
+        latestProject = getLatestProject(projectFiles);
+        version = projectFiles.size();
+        lastModified = getLastModifiedDate(projectFiles);
+        created = getCreationDate(files);
 
-        ObjectMapper  objectMapper = new ObjectMapper();
-        List<Project> projects     = null;
-
-        try {
-            projects = objectMapper.readValue(FileLoader.database, new TypeReference<List<Project>>() {});
-            Optional<Project> optionalProject   = projects.stream().filter(x -> x.name.equals(name)).findFirst();
-            if (optionalProject.isPresent()) {
-                Project project = optionalProject.get();
-                status = project.status;
-                rating = project.rating;
-            }
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<Project> projects = null;
+        TypeReference<List<Project>> listType = new TypeReference<List<Project>>() {
+        };
+        projects = objectMapper.readValue(FileLoader.getDatabase(), listType);
+        Optional<Project> optionalProject = projects.stream().filter(x -> x.name.equals(name)).findFirst();
+        if (optionalProject.isPresent()) {
+            Project project = optionalProject.get();
+            status = project.status;
+            rating = project.rating;
         }
-        catch (IOException e) { }
     }
 
-    public Project(String name, List<File> files, String dataPath) {
+    public Project(String name, List<File> files, String dataPath)
+            throws StreamReadException, DatabindException, IOException {
         this(name, files);
-
-
     }
 
     private static List<File> onlyExportFiles(List<File> files) {
@@ -85,7 +84,8 @@ public class Project {
         Date oldestCreationDate = createdList.stream().min(Comparator.naturalOrder()).get();
 
         List<Date> lastModifiedList = new ArrayList<>();
-        for (File file : files) lastModifiedList.add(new Date(file.lastModified()));
+        for (File file : files)
+            lastModifiedList.add(new Date(file.lastModified()));
         Date oldestModifiedDate = lastModifiedList.stream().min(Comparator.naturalOrder()).get();
 
         return oldestCreationDate.compareTo(oldestModifiedDate) <= 0 ? oldestCreationDate : oldestModifiedDate;
@@ -93,20 +93,22 @@ public class Project {
 
     private static Date getLastModifiedDate(List<File> files) {
         List<Date> lastModifiedList = new ArrayList<>();
-        for (File file : files) lastModifiedList.add(new Date(file.lastModified()));
+        for (File file : files)
+            lastModifiedList.add(new Date(file.lastModified()));
         return lastModifiedList.stream().max(Comparator.naturalOrder()).get();
     }
 
     private static File getLatestProject(List<File> files) {
         files.sort(Comparator.comparingLong(File::lastModified).reversed());
-        if (files.isEmpty()) return null;
+        if (files.isEmpty())
+            return null;
         return files.get(0);
     }
 
     private static String getVersion(List<File> files, List<File> projectFiles) {
-        String[] strs    = files.stream().map(File::getName).toArray(String[]::new);
-        String   name    = StringUtils.getCommonPrefix(strs);
-        String   version = projectFiles.get(0).getName().substring(name.length());
+        String[] strs = files.stream().map(File::getName).toArray(String[]::new);
+        String name = StringUtils.getCommonPrefix(strs);
+        String version = projectFiles.get(0).getName().substring(name.length());
         return FileLoader.cleanUpName(version).replaceAll("_", "");
     }
 
@@ -130,7 +132,7 @@ public class Project {
         try {
             files.replaceAll(file -> {
                 // TODO: Stupid bug with [] see progressive files
-                File    dest   = new File(file.getAbsolutePath().replaceFirst(name, newName));
+                File dest = new File(file.getAbsolutePath().replaceFirst(name, newName));
                 boolean result = file.renameTo(dest);
                 if (result) {
                     System.out.println(file.getName() + " got renamed to " + dest.getName());

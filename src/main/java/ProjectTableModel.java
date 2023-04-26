@@ -4,11 +4,11 @@ import java.util.Date;
 import java.util.List;
 
 public class ProjectTableModel extends AbstractTableModel {
-    private       List<Project>  projects;
+    private List<Project> projects;
 
     ProjectTableModel(List<Project> projects) {
         this.projects = projects;
-        DatabaseWriter.saveToDatabase(projects);
+        // DatabaseWriter.saveToDatabase(projects);
     }
 
     public Project getProjectAt(int rowIndex) {

@@ -17,7 +17,9 @@ public class DatabaseWriter {
     public static void saveToDatabase(List<Project> projectList) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            objectMapper.writeValue(FileLoader.database, projectList);
+            File database = FileLoader.getDatabase();
+            System.out.println(database.canWrite());
+            objectMapper.writeValue(database, projectList);
             changeCounter += 1;
             if (changeCounter >= changesPerBackup) {
                 createBackup();
@@ -30,10 +32,11 @@ public class DatabaseWriter {
     }
 
     public static void createBackup() {
-        String backupFolderPath = System.getProperty("user.home") + File.separator + "Documents" + File.separator + "Projectz Backups";
+        String backupFolderPath = System.getProperty("user.home") + File.separator + "Documents" + File.separator
+                + "Projectz Backups";
         String backupPath = backupFolderPath + File.separator + new Date().toString().replaceAll(":", "-");
         try {
-            FileUtils.copyFile(FileLoader.database, new File(backupPath));
+            FileUtils.copyFile(FileLoader.getDatabase(), new File(backupPath));
             System.out.println("Saved backup to " + backupPath);
         } catch (IOException e) {
             JOptionPane.showConfirmDialog(null, "Failed to create backup");

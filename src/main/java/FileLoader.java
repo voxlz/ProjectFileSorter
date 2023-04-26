@@ -1,3 +1,5 @@
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
@@ -19,26 +21,25 @@ public class FileLoader {
     private static final String databasePath = System.getProperty("user.home") + File.separator + ".projectzDatabase";
 
     private static String projectExtension = "flp";
-    public static File   database;
+    private static File database;
 
-    /** Prompts user to select a folder and returns all the projects in said folder. */
-    public static List<Project> getProjects() {
-        database = getDatabase();
-        File selectedFile = getProjectsPath();
-
-        saveFilePath(selectedFile);
+    /**
+     * Prompts user to select a folder and returns all the projects in said folder.
+     * 
+     * @throws Exception
+     */
+    public static List<Project> getProjects() throws Exception {
         Multimap<String, File> mapOfAllFiles = null;
-        selectedFile.getAbsolutePath();
-        try {
-            mapOfAllFiles = createMapOfFiles(selectedFile);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Multimap<String, File> mapOfFiles = removeEntriesWithoutProjectFile(mapOfAllFiles);
-        List<Project> projects = extractMapToList(mapOfFiles);
-        return projects;
+        mapOfAllFiles = createMapOfFiles(getProjectsPath());
+        mapOfAllFiles = removeEntriesWithoutProjectFile(mapOfAllFiles);
+        return convertMapToProjects(mapOfAllFiles);
     }
 
+    /**
+     * Prompts user to select a projects folder and returns the projects path.
+     * 
+     * @return the projects directory
+     */
     private static File getProjectsPath() {
         File projectsPath = loadFilePath();
         if (projectsPath == null) {
@@ -50,14 +51,19 @@ public class FileLoader {
         return projectsPath;
     }
 
-    private static File getDatabase() {
-        File   database     = new File(databasePath);
-        if (!database.exists()) {
+    public static File getDatabase() {
+
+        if (database != null) {
+            return database;
+        }
+
+        File file = new File(databasePath);
+        if (!file.exists()) {
             int result = JOptionPane.showConfirmDialog(null, "Can't find a database, do you want to create a new one?");
             if (result == JOptionPane.OK_OPTION) {
                 try {
-                    if (database.createNewFile()) {
-                        Files.setAttribute(database.toPath(), "dos:hidden", true); // Hidden for Win
+                    if (file.createNewFile()) {
+                        Files.setAttribute(file.toPath(), "dos:hidden", true); // Hidden for Win
                     } else {
                         JOptionPane.showMessageDialog(null, "Could not create a new database");
                     }
@@ -67,12 +73,31 @@ public class FileLoader {
                 }
             }
         }
-        return database;
+
+        if (!file.canRead()) {
+            file.setReadable(true);
+        }
+
+        if (!file.canWrite()) {
+            file.setWritable(true);
+        }
+
+        return file;
     }
 
-    private static List<Project> extractMapToList(Multimap<String, File> map) {
-        List<Project> projects = new ArrayList<>();
+    /**
+     * Converts the map of files to a list of projects.
+     * 
+     * @param map
+     * @return
+     * @throws IOException
+     * @throws DatabindException
+     * @throws StreamReadException
+     */
+    private static List<Project> convertMapToProjects(Multimap<String, File> map)
+            throws StreamReadException, DatabindException, IOException {
 
+        List<Project> projects = new ArrayList<>();
 
         // For every array of files for a given key
         for (String key : map.keySet()) {
@@ -102,11 +127,13 @@ public class FileLoader {
                 }
             }
             return map;
-        } else throw new Exception("Tried to sort an directory that no longer exist");
+        } else
+            throw new Exception("Tried to sort an directory that no longer exist");
     }
 
     /**
-     * Removes all entries in a map which do not have a least one DAW project file associated
+     * Removes all entries in a map which do not have a least one DAW project file
+     * associated
      * with them.
      *
      * @param map the map to check
@@ -131,7 +158,7 @@ public class FileLoader {
 
     static String cleanUpName(String name) {
         return name
-                .replaceAll("\\..+$", "") //Removes file endings
+                .replaceAll("\\..+$", "") // Removes file endings
                 .trim();
     }
 
@@ -195,7 +222,7 @@ public class FileLoader {
             Path dst = Paths.get(folderPath.getAbsolutePath(), file.getName());
             Path src = file.toPath();
             if (dst.toFile().exists() && !src.equals(dst)) {
-                String dstStr  = dst.toString();
+                String dstStr = dst.toString();
                 String fileExt = FilenameUtils.getExtension(dstStr);
                 String newPath = FilenameUtils.removeExtension(dstStr) + " (Copy)." + fileExt;
                 Files.move(src, new File(newPath).toPath(), StandardCopyOption.ATOMIC_MOVE);
